@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
-from .models import Form, FormGroup, FormField, FilledForm, FilledFormField, Option
+from .models import Form, FormGroup, FormField, FilledForm, FilledFormField, Option, OptionFormField
 
 
 ## Returns json response of all forms (brief)
@@ -308,3 +308,25 @@ def createAddFields(request, group_id):
 
     except Exception as ex:
         return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+
+def createAddOptions(request, field_id):
+    if request.method != "POST":
+        return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
+    try:
+        data = json.loads(request.body)
+        field = get_object_or_404(FormField, field_id)
+
+        for option_data in data.get("options", []):
+            option = Option.objects.add(
+                name=option_data.get("name"),
+            )
+            OptionFormField.objects.add(
+                field=field,
+                option=option,
+            )
+
+        return JsonResponse({"success":True})
+
+    except Exception as ex:
+            return JsonResponse({"success":False, "error":str(ex)}, status=500)

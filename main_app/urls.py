@@ -12,5 +12,6 @@ urlpatterns = [
     path('form/<int:form_id>/send-response', views.sendResponse, name='sendResponse'),
     path('form/create', views.createForm, name='createForm'),
     path('form/<int:form_id>/create/addGroup', views.createAddGroup, name='createAddGroup'),
-    path('form/group/<int:group_id>/addFields', views.createAddFields, name='createAddFields')
+    path('form/group/<int:group_id>/addFields', views.createAddFields, name='createAddFields'),
+    path('form/field/<int:field_id>/addOptions', views.createAddOptions, name='createAddOptions')
 ]
