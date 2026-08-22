@@ -162,6 +162,7 @@ def getResponseDetail(request, pk):
 
     return JsonResponse({"success": True, "data": data})
 
+
 def cast_answer(field_type, answer):
     """
     Casts a string answer into the correct type based on field_type.
@@ -192,6 +193,7 @@ def cast_answer(field_type, answer):
             return None, None, None, None, None
 
     return None, None, None, None, None
+
 
 ## Receives a filled form response from client and creates a record
 ## Returns success message and filled form id
@@ -240,7 +242,7 @@ def sendResponse(request, form_id):
 
 
 ## Receives new form data from client and creates a record
-## Returns success message and form id
+## Returns success message and form id, OR error message
 @csrf_exempt
 def createForm(request):
     if request.method != "POST":
@@ -260,8 +262,8 @@ def createForm(request):
         return JsonResponse({"success": False, "error": str(ex)}, status=500)
 
 
-## Receives new form group from client and creates record
-## Returns success message and group id OR error message
+## Receives new form group from client and form pk and creates record
+## Returns success message and group id, OR error message
 @csrf_exempt
 def createAddGroup(request, form_id):
     if request.method != "POST":
@@ -281,8 +283,8 @@ def createAddGroup(request, form_id):
         return JsonResponse({"success":False, "error":str(ex)}, status=500)
 
 
-## Receives new form field from client and creates record
-## Returns success message and field id OR error message
+## Receives new form fields from client and group pk and creates record
+## Returns success message and field id set, OR error message
 @csrf_exempt
 def createAddFields(request, group_id):
     if request.method != "POST":
@@ -290,6 +292,7 @@ def createAddFields(request, group_id):
     try:
         data = json.loads(request.body)
         group = get_object_or_404(FormGroup, pk=group_id)
+        created_fields = []
 
         # for fields in group
         for field_data in data.get("fields", []):
@@ -303,30 +306,41 @@ def createAddFields(request, group_id):
                         index=field_data.get("index"),
                         is_optional=field_data.get("is_optional")
                     )
+            created_fields.append({
+                "id": field.id,
+                "name": field.name
+            })
 
-        return JsonResponse({"success":True})
+        return JsonResponse({"success":True, "fields":created_fields})
 
     except Exception as ex:
         return JsonResponse({"success":False, "error":str(ex)}, status=500)
 
 
+## Receives new options from client and field pk and creates records
+## Returns success message and option id set, OR error message
+@csrf_exempt
 def createAddOptions(request, field_id):
     if request.method != "POST":
         return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
     try:
         data = json.loads(request.body)
-        field = get_object_or_404(FormField, field_id)
+        form_field = get_object_or_404(FormField, pk=field_id)
+        created_options = []
 
         for option_data in data.get("options", []):
-            option = Option.objects.add(
+            option = Option.objects.create(
                 name=option_data.get("name"),
             )
-            OptionFormField.objects.add(
-                field=field,
+            OptionFormField.objects.create(
+                form_field=form_field,
                 option=option,
             )
-
-        return JsonResponse({"success":True})
+            created_options.append({
+                "id": option.id,
+                "name": option.name
+            })
+        return JsonResponse({"success":True, "options":created_options})
 
     except Exception as ex:
             return JsonResponse({"success":False, "error":str(ex)}, status=500)
