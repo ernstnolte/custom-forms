@@ -14,9 +14,9 @@ def getForms(request):
 
 
 ## Returns json response a single form's details/attributes
-def getFormDetail(request, pk):
+def getFormDetail(request, form_id):
     # Get form from pk
-    form = get_object_or_404(Form, pk=pk)
+    form = get_object_or_404(Form, pk=form_id)
 
     # Prefetch groups, fields, and options
     groups = (
@@ -62,8 +62,8 @@ def getFormDetail(request, pk):
 
 
 ## Returns json response of filled forms by form pk (brief)
-def getFormResponses(request, pk):
-    form = get_object_or_404(Form, pk=pk)
+def getFormResponses(request, form_id):
+    form = get_object_or_404(Form, pk=form_id)
     filledForms = (
          FilledForm.objects.filter(form=form)
          .order_by("date_filled")
@@ -90,8 +90,8 @@ def getFormResponses(request, pk):
 
 
 ## Returns json response of a specific form response's details
-def getResponseDetail(request, pk):
-    response = get_object_or_404(FilledForm, pk=pk)
+def getResponseDetail(request, filled_form_id):
+    response = get_object_or_404(FilledForm, pk=filled_form_id)
 
     groups = (
         FormGroup.objects.filter(form=response.form)
@@ -197,7 +197,7 @@ def cast_answer(field_type, answer):
 
 ## Receives a filled form response from client and creates a record
 ## Returns success message and filled form id
-def sendResponse(request, form_id):
+def createFilledForm(request, form_id):
     if request.method != "POST":
         return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
 
@@ -344,3 +344,62 @@ def createAddOptions(request, field_id):
 
     except Exception as ex:
             return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+    
+## Receives a form id from client and removes a record
+## Returns a success message and form id, OR error message
+def deleteForm(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
+
+    try:
+        Form.objects.delete(pk=form_id)
+        return JsonResponse({"success":True, "form_id":form_id})
+    
+    except Exception as ex:
+        return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+
+## Receives a group id from client and removes a record
+## Returns a success message and group id, OR error message
+@csrf_exempt
+def deleteGroup(request, group_id):
+    if request.method != "POST":
+            return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
+    
+    try:
+        FormGroup.objects.delete(pk=group_id)
+        return JsonResponse({"success":True, "group_id":group_id})
+    
+    except Exception as ex:
+        return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+
+## Receives a field id from client and removes a record
+## Returns a success message and field id, OR error message
+@csrf_exempt
+def deleteField(request, field_id):
+    if request.method != "POST":
+            return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
+    
+    try:
+        FormField.objects.delete(pk=field_id)
+        return JsonResponse({"success":True, "field_id":field_id})
+    
+    except Exception as ex:
+        return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+
+## Receives a filled form id from client and removes a record
+## Returns a success message and form id, OR error message
+@csrf_exempt
+def deleteFilledForm(request, filled_form_id):
+    if request.method != "POST":
+            return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
+    
+    try:
+        FilledForm.objects.delete(pk=filled_form_id)
+        return JsonResponse({"success":True, "filled_form_id":filled_form_id})
+    
+    except Exception as ex:
+        return JsonResponse({"success":False, "error":str(ex)}, status=500)
