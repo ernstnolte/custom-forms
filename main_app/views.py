@@ -5,6 +5,29 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
 from .models import Form, FormGroup, FormField, FilledForm, FilledFormField, Option, OptionFormField
+from django.contrib.auth import authenticate, get_user_model, login, logout
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
+from django.middleware.csrf import get_token
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_GET, require_POST
+
+
+def parse_json_body(request):
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+
+    return data if isinstance(data, dict) else None
+
+
+@require_GET
+@ensure_csrf_cookie
+def csrf_token(request):
+    return JsonResponse({"csrfToken": get_token(request)})
+
 
 
 ## Returns json response of all forms (brief)
@@ -194,53 +217,6 @@ def cast_answer(field_type, answer):
 
     return None, None, None, None, None
 
-
-## Receives a filled form response from client and creates a record
-## Returns success message and filled form id
-def createFilledForm(request, form_id):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
-
-    try:
-        data = json.loads(request.body)
-        form = get_object_or_404(Form, pk=form_id)
-
-        filled_form = FilledForm.objects.create(
-            form=form,
-            date_filled=timezone.now(),
-            filled_by=request.user if request.user.is_authenticated else None
-        )
-
-        for field_data in data.get("fields", []):
-            field_id = field_data.get("field_id")
-            answer = field_data.get("answer")
-
-            form_field = get_object_or_404(FormField, pk=field_id)
-
-            text_value, numeric_value, date_time_value, is_checked, selected_option_id = cast_answer(
-                form_field.field_type, answer
-            )
-
-            selected_option = None
-            if selected_option_id:
-                selected_option = get_object_or_404(Option, pk=selected_option_id)
-
-            FilledFormField.objects.create(
-                filled_form=filled_form,
-                form_field=form_field,
-                text_value=text_value,
-                numeric_value=numeric_value,
-                date_time_value=date_time_value,
-                is_checked=is_checked,
-                selected_option=selected_option
-            )
-
-        return JsonResponse({"success": True, "id": filled_form.id})
-
-    except Exception as ex:
-        return JsonResponse({"success": False, "error": str(ex)}, status=500)
-
-
 ## Receives new form data from client and creates a record
 ## Returns success message and form id, OR error message
 @csrf_exempt
@@ -345,6 +321,50 @@ def createAddOptions(request, field_id):
     except Exception as ex:
             return JsonResponse({"success":False, "error":str(ex)}, status=500)
 
+## Receives a filled form response from client and creates a record
+## Returns success message and filled form id
+def createFilledForm(request, form_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        form = get_object_or_404(Form, pk=form_id)
+
+        filled_form = FilledForm.objects.create(
+            form=form,
+            date_filled=timezone.now(),
+            filled_by=request.user if request.user.is_authenticated else None
+        )
+
+        for field_data in data.get("fields", []):
+            field_id = field_data.get("field_id")
+            answer = field_data.get("answer")
+
+            form_field = get_object_or_404(FormField, pk=field_id)
+
+            text_value, numeric_value, date_time_value, is_checked, selected_option_id = cast_answer(
+                form_field.field_type, answer
+            )
+
+            selected_option = None
+            if selected_option_id:
+                selected_option = get_object_or_404(Option, pk=selected_option_id)
+
+            FilledFormField.objects.create(
+                filled_form=filled_form,
+                form_field=form_field,
+                text_value=text_value,
+                numeric_value=numeric_value,
+                date_time_value=date_time_value,
+                is_checked=is_checked,
+                selected_option=selected_option
+            )
+
+        return JsonResponse({"success": True, "id": filled_form.id})
+
+    except Exception as ex:
+        return JsonResponse({"success": False, "error": str(ex)}, status=500)
     
 ## Receives a form id from client and removes a record
 ## Returns a success message and form id, OR error message
@@ -353,7 +373,7 @@ def deleteForm(request, form_id):
         return JsonResponse({"success":False, "error":"Invalid request method"}, status=405)
 
     try:
-        Form.objects.delete(pk=form_id)
+        Form.objects.filter(pk=form_id).delete()
         return JsonResponse({"success":True, "form_id":form_id})
     
     except Exception as ex:
@@ -403,3 +423,83 @@ def deleteFilledForm(request, filled_form_id):
     
     except Exception as ex:
         return JsonResponse({"success":False, "error":str(ex)}, status=500)
+
+@csrf_exempt
+def deleteOptionFormField(request, option_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method"}, status=405)
+
+    try:
+        OptionFormField.objects.filter(option_id=option_id).delete()
+        return JsonResponse({"success": True, "option_id": option_id})
+
+    except Exception as ex:
+        return JsonResponse({"success": False, "error": str(ex)}, status=500)
+
+
+@require_POST
+def signup(request):
+    data = parse_json_body(request)
+    if data is None:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    username = data.get("username", "").strip()
+    password = data.get("password", "")
+    email = data.get("email", "").strip()
+
+    if not username or not password:
+        return JsonResponse(
+            {"error": "username and password are required"},
+            status=400,
+        )
+
+    User = get_user_model()
+    candidate = User(username=username, email=email)
+
+    try:
+        validate_password(password, user=candidate)
+    except ValidationError as error:
+        return JsonResponse({"errors": error.messages}, status=400)
+
+    try:
+        with transaction.atomic():
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+            )
+    except IntegrityError:
+        return JsonResponse({"error": "That username is unavailable"}, status=409)
+
+    return JsonResponse(
+        {"success": True, "user": {"id": user.id, "username": user.get_username()}},
+        status=201,
+    )
+
+
+@require_POST
+def login_user(request):
+    data = parse_json_body(request)
+    if data is None:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    user = authenticate(
+        request,
+        username=data.get("username", ""),
+        password=data.get("password", ""),
+    )
+    if user is None:
+        return JsonResponse({"error": "Invalid username or password"}, status=401)
+
+    login(request, user)  # Establishes the session and rotates the CSRF token.
+    return JsonResponse({
+        "success": True,
+        "user": {"id": user.id, "username": user.get_username()},
+        "csrfToken": get_token(request),
+    })
+
+
+@require_POST
+def logout_user(request):
+    logout(request)
+    return JsonResponse({"success": True})

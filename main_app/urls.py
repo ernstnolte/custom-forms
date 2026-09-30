@@ -4,21 +4,27 @@ from . import views
 urlpatterns = [
     # Form component view paths
     path('forms', views.getForms, name='getForms'),
-    path('form/<int:form_id>', views.getFormDetail, name='getFormDetail'),
-    path('form/<int:form_id>/responses', views.getFormResponses, name='getResponses'),
-    path('response/<int:filled_form_id>', views.getResponseDetail, name='getResponseDetail'),
+    path('forms/<int:form_id>', views.getFormDetail, name='getFormDetail'),
+    path('forms/<int:form_id>/responses', views.getFormResponses, name='getResponses'),
+    path('responses/<int:filled_form_id>', views.getResponseDetail, name='getResponseDetail'),
 
     # Form component creation paths
-    path('form/create', views.createForm, name='createForm'),
-    path('form/<int:form_id>/create/addGroup', views.createAddGroup, name='createAddGroup'),
-    path('form/group/<int:group_id>/addFields', views.createAddFields, name='createAddFields'),
-    path('form/field/<int:field_id>/addOptions', views.createAddOptions, name='createAddOptions'),
-    path('form/<int:form_id>/send-response', views.createFilledForm, name='createFilledForm'),
+    path('forms/create', views.createForm, name='createForm'),
+    path('forms/<int:form_id>/create/addGroup', views.createAddGroup, name='createAddGroup'),
+    path('forms/group/<int:group_id>/addFields', views.createAddFields, name='createAddFields'),
+    path('forms/field/<int:field_id>/addOptions', views.createAddOptions, name='createAddOptions'),
+    path('forms/<int:form_id>/send-response', views.createFilledForm, name='createFilledForm'),
 
     # Form component deletion paths
-    path('form/<int:form_id>/delete', views.deleteForm, name='deleteForm'),
-    path('group/<int:group_id>/delete', views.deleteGroup, name='deleteGroup'),
-    path('field/<int:field_id>/delete', views.deleteField, name='deleteField'),
-    path('option/<int:option_id>/delete', views.deleteOption, name='deleteOption'),
-    path('response/<int:filled_form_id>/delete', views.deleteFilledForm, name='deleteFilledForm'),
+    path('forms/<int:form_id>/delete', views.deleteForm, name='deleteForm'),
+    path('forms/group/<int:group_id>/delete', views.deleteGroup, name='deleteGroup'),
+    path('forms/field/<int:field_id>/delete', views.deleteField, name='deleteField'),
+    path('forms/option/<int:option_id>/delete', views.deleteOptionFormField, name='deleteOptionFormField'),
+    path('forms/responses/<int:filled_form_id>/delete', views.deleteFilledForm, name='deleteFilledForm'),
+
+    # User authentication paths
+    path("auth/csrf", views.csrf_token, name="csrf-token"),
+    path("auth/signup", views.signup, name="signup"),
+    path("auth/login", views.login_user, name="login"),
+    path("auth/logout", views.logout_user, name="logout"),
 ]
