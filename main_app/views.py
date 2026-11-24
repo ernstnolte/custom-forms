@@ -29,7 +29,6 @@ def csrf_token(request):
     return JsonResponse({"csrfToken": get_token(request)})
 
 
-
 ## Returns json response of all forms (brief)
 def getForms(request):
     data = list(Form.objects.values("id", "name", "description"))
