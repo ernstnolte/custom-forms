@@ -1,6 +1,6 @@
 import json
 from django.http import JsonResponse, Http404
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.views.decorators.csrf import csrf_exempt
@@ -12,6 +12,10 @@ from django.db import IntegrityError, transaction
 from django.middleware.csrf import get_token
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
+
+
+def empty_page(request):
+    return render(request, "main_app/index.html")
 
 
 def parse_json_body(request):
