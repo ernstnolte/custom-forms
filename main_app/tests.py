@@ -7,3 +7,4 @@ class RootPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "<body></body>", html=True)
+        self.assertContains(response, 'href="/static/main_app/css/global.css"')
