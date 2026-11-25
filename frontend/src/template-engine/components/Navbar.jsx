@@ -1,5 +1,4 @@
 import React from "react";
-import "./Navbar.css";
 
 export function Navbar() {
   const [user, setUser] = React.useState(undefined);
@@ -51,31 +50,35 @@ export function Navbar() {
   }
 
   return (
-    <header className="site-header">
-      <a className="site-brand" href="/">
+    <header className="flex flex-none items-center justify-between gap-4 border-b border-line bg-footer px-6 py-2.5">
+      <a className="text-title font-bold tracking-[0.02em] text-ink-strong hover:text-white" href="/">
         ReForm
       </a>
-      <nav className="site-nav" aria-label="Main navigation">
+      <nav className="flex items-center gap-5 text-nav" aria-label="Main navigation">
         {user === undefined ? null : user ? (
           <>
-            <span className="nav-greeting">Hi, {user.username}</span>
-            <button className="nav-link" onClick={handleLogout} type="button">
+            <span className="text-subtle">Hi, {user.username}</span>
+            <button
+              className="cursor-pointer border-0 bg-transparent p-0 text-link hover:text-white hover:underline"
+              onClick={handleLogout}
+              type="button"
+            >
               Log out
             </button>
           </>
         ) : (
           <>
-            <a className="nav-link" href="/login">
+            <a className="text-link hover:text-white hover:underline" href="/login">
               Log in
             </a>
-            <a className="nav-link" href="/signup">
+            <a className="text-link hover:text-white hover:underline" href="/signup">
               Sign up
             </a>
           </>
         )}
       </nav>
       {error && (
-        <p className="nav-error" role="status">
+        <p className="text-caption text-error" role="status">
           {error}
         </p>
       )}

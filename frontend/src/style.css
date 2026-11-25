@@ -1,52 +1,49 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+  --color-page: #1a1a1a;
+  --color-panel: #262626;
+  --color-panel-header: #333333;
+  --color-footer: #202020;
+  --color-line: #333333;
+  --color-line-strong: #3d3d3d;
+  --color-line-input: #4a4a4a;
+  --color-input: #1f1f1f;
+  --color-ink: #e5e5e5;
+  --color-ink-strong: #f5f5f5;
+  --color-muted: #b0b0b0;
+  --color-subtle: #9a9a9a;
+  --color-faint: #8a8a8a;
+  --color-link: #d4d4d4;
+  --color-placeholder: #6b6b6b;
+  --color-focus: #8a8a8a;
+  --color-primary: #e5e5e5;
+  --color-on-primary: #1a1a1a;
+  --color-error: #cfcfcf;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.6;
+  --text-nav: 0.875rem;
+  --text-nav--line-height: 1.6;
+  --text-note: 0.85rem;
+  --text-note--line-height: 1.6;
+  --text-caption: 0.8rem;
+  --text-caption--line-height: 1.6;
+
+  --ease-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-html,
-body,
-#root {
-  min-height: 100%;
-  margin: 0;
-}
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  font-family: "Open Sans", sans-serif;
-  background-color: #9c9c9c;
-}
-
-.top-section {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  width: 100%;
-  padding: 5px;
-  background-color: #8b8b8b;
-}
-
-.card {
-  width: 300px;
-  min-height: 200px;
-  margin: 10px;
-  padding: 10px;
-  border-radius: 3px;
-  background-color: #f5f5f5;
-}
-.card:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  background-color: #e0e0e0;
-  transition: 0.3s ease-in-out;
-}
-
-.card h2 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.card p {
-  margin: 5px 0;
-  color: #666;
-  font-size: 14px;
+  body {
+    font-family: "Open Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--color-page);
+    color: var(--color-ink);
+    line-height: 1.6;
+  }
 }
