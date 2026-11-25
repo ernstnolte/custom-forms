@@ -24,6 +24,7 @@ urlpatterns = [
 
     # User authentication paths
     path("auth/csrf", views.csrf_token, name="csrf-token"),
+    path("auth/user", views.current_user, name="current-user"),
     path("auth/signup", views.signup, name="signup"),
     path("auth/login", views.login_user, name="login"),
     path("auth/logout", views.logout_user, name="logout"),
